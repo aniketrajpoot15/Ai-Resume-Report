@@ -6,8 +6,23 @@ const app = express()
 
 app.use(express.json())
 app.use(cookieParser())
+const allowedOrigins = [
+    "http://localhost:5173",
+    process.env.FRONTEND_URL
+].filter(Boolean)
+
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, or same-origin)
+        if (!origin || allowedOrigins.includes(origin) || (process.env.NODE_ENV !== "production" && origin.includes("localhost"))) {
+            return callback(null, true)
+        }
+        // Allow Vercel preview URLs if FRONTEND_URL is set or contains vercel.app
+        if (origin.endsWith(".vercel.app")) {
+            return callback(null, true)
+        }
+        return callback(null, true) // permissive for easy deployment
+    },
     credentials: true
 }))
 
